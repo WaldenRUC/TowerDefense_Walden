@@ -19,6 +19,9 @@ light_tower::light_tower(QPoint pos, MainWindow *game, const QPixmap &sprite/* =
     : m_attacking(false)
     , m_attackRange(RANGE)//原先70
     , m_damage(DAMAGE)//原先10
+    , m_basic_damage(DAMAGE)
+    , m_basic_range(RANGE)
+    , level(1)
     , x(0)
     , y(0)
     , z(0)
@@ -46,6 +49,9 @@ light_tower::~light_tower(){
 
     delete m_lightTowerTimer;
     m_lightTowerTimer = NULL;
+
+    delete changethecolor;
+    changethecolor = NULL;
 }
 void light_tower::checkEnemyInRange()
 {}
@@ -57,6 +63,10 @@ void light_tower::draw(QPainter *painter) const
     painter->drawEllipse(m_pos, m_attackRange, m_attackRange);
     static const QPoint offsetPoint(-ms_fixedSize.width() / 2, -ms_fixedSize.height() / 2);
     painter->translate(m_pos);
+    QPoint levelpoint(-15,-40);
+    painter->setPen(Qt::black);
+    painter->drawText(levelpoint,QString("Lv. %1").arg(level));
+
     painter->drawPixmap(offsetPoint, m_sprite);
     painter->restore();
 }

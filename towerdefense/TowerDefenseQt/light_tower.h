@@ -25,6 +25,7 @@ public:
     void targetKilled();
     void attackEnemy();
     void damageEnemy();
+    int				m_damage;		// 代表攻击敌人时造成的伤害
     void lostSightOfEnemy();
     void setdamage(int damage){
         this->m_damage += damage;
@@ -51,6 +52,9 @@ public:
     const QPoint getpos(){
         return this->m_pos;
     }
+    void originrange(){
+        m_attackRange = 0;
+    }
     void setrange(int range){
         this->m_attackRange+=range;
     }
@@ -61,8 +65,10 @@ private slots:
 private:
     bool			m_attacking;
     int				m_attackRange;	// 代表塔可以攻击到敌人的距离
-    int				m_damage;		// 代表攻击敌人时造成的伤害
     int				m_fireRate;		// 代表再次攻击敌人的时间间隔
+
+    int             m_basic_damage;
+    int             m_basic_range;
 
     qreal			m_rotationSprite;
     Enemy *			m_chooseEnemy;
@@ -73,7 +79,7 @@ private:
     QTimer *        m_lightlazer;
     QTimer *        changethecolor;
     //光塔专用时间槽
-    const QPoint	m_pos;
+    const QPoint    m_pos;
     const QPixmap	m_sprite;
 
     static const QSize ms_fixedSize;

@@ -34,11 +34,10 @@ Enemy::Enemy(WayPoint *startWayPoint, MainWindow *game, const QPixmap &sprite/* 
 	, m_game(game)
 	, m_sprite(sprite)
 {
-    //加速
+    kind = 0;
     m_accelerate = new QTimer(this);
     connect(m_accelerate, SIGNAL(timeout()),this, SLOT(changespeed()));
     //m_accelerate->start(1000);//这个在创建的时候就激活了，所以所有的敌人加速效果一样
-    //加速
     m_back_to_origin = new QTimer(this);
     connect(m_back_to_origin, SIGNAL(timeout()), this, SLOT(back_to_origin()));
 }
@@ -46,7 +45,13 @@ Enemy::Enemy(WayPoint *startWayPoint, MainWindow *game, const QPixmap &sprite/* 
 Enemy::~Enemy()
 {
 	m_attackedTowersList.clear();
+/*
+    Enemy *newenemy;
+    newenemy = new Enemy(m_destinationWayPoint, m_game);
+    m_game->m_enemyList.push_back(newenemy);
+*/
     m_destinationWayPoint = NULL;
+
 
     m_accelerate=NULL;
     m_back_to_origin = NULL;
@@ -68,9 +73,9 @@ void Enemy::move()
         invincible=1;//invincible
     }
     */
-    /*if(m_attackedTowersList.size()==0)slow=1.0;//减速机制：如果没被攻击，则保持原速
-    else slow=0.5;//如果被这些塔攻击，则slow系数改变为0.5
-    */
+//    if(m_attackedTowersList.size()==0)slow=1.0;//减速机制：如果没被攻击，则保持原速
+//    else slow=0.5;//如果被这些塔攻击，则slow系数改变为0.5
+
     if (!m_active)
 		return;
 
@@ -121,7 +126,7 @@ void Enemy::draw(QPainter *painter) const
 
 	painter->save();
 
-	QPoint healthBarPoint = m_pos + QPoint(-Health_Bar_Width / 2 - 5, -ms_fixedSize.height() / 3);
+    QPoint healthBarPoint = m_pos + QPoint(-Health_Bar_Width / 2 - 5, -ms_fixedSize.height() / 3);
 	// 绘制血条
     painter->setPen(Qt::NoPen);
     painter->setBrush(Qt::red);
@@ -129,8 +134,8 @@ void Enemy::draw(QPainter *painter) const
 	QRect healthBarBackRect(healthBarPoint, QSize(Health_Bar_Width, 2));
 	painter->drawRect(healthBarBackRect);
 
-    if(m_currentHp>=15000)painter->setBrush(Qt::green);//原先：green
-    else if(m_currentHp>=5000)painter->setBrush(Qt::yellow);//
+    if(m_currentHp>=m_maxHp*0.5)painter->setBrush(Qt::green);//原先：green
+    else if(m_currentHp>=m_maxHp*0.3)painter->setBrush(Qt::yellow);//
     else painter->setBrush(Qt::black);//
     //以上：敌人的血量与血条颜色相关
 

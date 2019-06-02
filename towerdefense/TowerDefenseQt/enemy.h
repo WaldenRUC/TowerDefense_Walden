@@ -33,7 +33,7 @@ public:
 
     void gotLostSight_by_tower(Tower *attacker);
     void gotLostSight_by_light_tower(light_tower *attacker);
-
+    int kind;
     void setm_walkingspeed(qreal p){m_walkingSpeed = p;}
     void setQPixmap(QString A){
         QPixmap temp =QPixmap(A);

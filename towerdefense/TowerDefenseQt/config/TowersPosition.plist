@@ -14,6 +14,12 @@
 		<key>y</key>
                 <integer>346</integer>
 	</dict>
+        <dict>
+                <key>x</key>
+                <integer>400</integer>
+                <key>y</key>
+                <integer>350</integer>
+        </dict>
 	<dict>
 		<key>x</key> 
                 <integer>470</integer>

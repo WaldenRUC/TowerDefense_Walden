@@ -40,6 +40,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
 	ui->setupUi(this);
     setFixedSize(1160,640);//调整画面大小origin:960*640
+    //原先：1160，640
     stage = 1;
     preLoadWavesInfo();//载入敌人进攻波数
     loadTowerPositions();//载入塔的位置
@@ -65,6 +66,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::setMenu()
 {
+
     m_selectmenu=new QMenu(this);
     QAction *p = new QAction(m_selectmenu);
     QAction *q = new QAction(m_selectmenu);
@@ -77,51 +79,117 @@ void MainWindow::setMenu()
     connect(p, SIGNAL(triggered()), this, SLOT(setTower()));
 
     m_upgrademenu = new QMenu(this);
+    QAction *info = new QAction(m_upgrademenu);
+    QAction *up0 = new QAction(m_upgrademenu);
     QAction *up1 = new QAction(m_upgrademenu);
     QAction *up2 = new QAction(m_upgrademenu);
+    QAction *up3 = new QAction(m_upgrademenu);
+//    if(temptower != NULL)
+//        up0->setText(tr("全面升级：伤害：%1 ---> %2").arg(temptower->m_damage).arg(temptower->m_damage+10));
+//    if(templighttower != NULL)
+//        up0->setText(tr("全面升级：伤害：%1 ---> %2").arg(templighttower->m_damage).arg(templighttower->m_damage+10));
+//
+    info->setText("显示基本信息");
+    up0->setText("全面升级");
     up1->setText("升级伤害");
     up2->setText("升级范围");
+    up3->setText("移除防御塔");
+    m_upgrademenu->addAction(info);
+    m_upgrademenu->addSeparator();
+    m_upgrademenu->addAction(up0);
+    m_upgrademenu->addSeparator();
     m_upgrademenu->addAction(up1);
     m_upgrademenu->addSeparator();
     m_upgrademenu->addAction(up2);
+    m_upgrademenu->addSeparator();
+    m_upgrademenu->addAction(up3);
+    connect(info, SIGNAL(triggered()), this, SLOT(showinfo()));
+    connect(up0,SIGNAL(triggered()), this, SLOT(upgradelevel()));
     connect(up1,SIGNAL(triggered()), this, SLOT(upgradeDamage()));
     connect(up2,SIGNAL(triggered()), this, SLOT(upgradeRange()));
-
-
-
+    connect(up3,SIGNAL(triggered()), this, SLOT(removethis()));
 }
+void MainWindow::showinfo(){
 
-void MainWindow::upgradeDamage(){
-
-    foreach (Tower *tower, m_towersList) {
-        if(collisionWithCircle(tower->getpos(), 30, temp, 30)){
-            tower->setdamage(50);break;
-        }
-    }
-    foreach (light_tower *tower, m_light_towersList) {
-        if(collisionWithCircle(tower->getpos(), 30, temp, 30)){
-            tower->setdamage(50);break;
-        }
-    }
-
+    if(temptower){tower_for_show = temptower;light_tower_for_show = NULL;}
+    if(templighttower){light_tower_for_show = templighttower;tower_for_show = NULL;}
 }
-
-void MainWindow::upgradeRange(){
-
-    foreach (Tower *tower, m_towersList) {
-        if(collisionWithCircle(tower->getpos(), 30, temp, 30)){
-            tower->setrange(50);
-            tower->level++;
+void MainWindow::removethis(){
+    foreach (Tower *tower, m_towersList) {//清除地狱塔
+        if(collisionWithCircle(tower->getpos(), 20, temp, 20)){
+            auto it=m_towerPositionsList.begin();
+            while(it!=m_towerPositionsList.end()){
+                if(collisionWithCircle(it->centerPos(), 20, temp, 20)){
+                    it->setHasTower(0);break;
+                }
+                ++it;
+            }
+            foreach(Enemy* enemy, m_enemyList){
+                if(enemy->m_attackedTowersList.indexOf(tower)!=-1){
+                    enemy->m_attackedTowersList.removeOne(tower);
+                }
+            }
+            //tower->getRemoved();不能写这个！！写了就闪退了
+            foreach (Enemy *enemy, enemyList())
+            {
+                if(enemy->m_attackedTowersList.indexOf(tower)!=-1)
+                enemy->gotLostSight_by_tower(tower);
+            }
+            tower->m_chooseEnemy = NULL;
+            m_towersList.removeOne(tower);
+            tower->originrange();//这里的操作：将塔移出游戏的塔的列表，但它本身存在，因此将其攻击范围设置为0
             break;
         }
     }
-    foreach (light_tower *tower, m_light_towersList) {
-        if(collisionWithCircle(tower->getpos(), 30, temp, 30)){
-            tower->setrange(50);break;
+    foreach (light_tower *tower, m_light_towersList) {//清除光塔
+        if(collisionWithCircle(tower->getpos(),20, temp, 20)){
+            auto it=m_towerPositionsList.begin();
+            while(it!=m_towerPositionsList.end()){
+                if(collisionWithCircle(it->centerPos(), 20, temp, 20)){
+                    it->setHasTower(0);break;
+                }
+                ++it;
+            }
+            foreach(Enemy* enemy, m_enemyList){
+                if(enemy->m_attackedlight_towersList.indexOf(tower)!=-1){
+                    enemy->m_attackedlight_towersList.removeOne(tower);
+                }
+            }
+            //tower->getRemoved();不能写这个！！写了就闪退了
+            m_light_towersList.removeOne(tower);
+            tower->originrange();//这里的操作：将塔移出游戏的塔的列表，但它本身存在，因此将其攻击范围设置为0
+            break;
         }
     }
 }
-
+void MainWindow::upgradelevel(){
+    if(temptower){
+        temptower->level++;
+        temptower->setrange(50);
+        temptower->setdamage(5);
+    }
+    if(templighttower){
+        templighttower->level++;
+        templighttower->setrange(50);
+        templighttower->setdamage(50);
+    }
+}
+void MainWindow::upgradeDamage(){
+    if(temptower){
+        temptower->setdamage(5);
+    }
+    if(templighttower){
+        templighttower->setdamage(50);
+    }
+}
+void MainWindow::upgradeRange(){
+    if(temptower){
+        temptower->setrange(50);
+    }
+    if(templighttower){
+        templighttower->setrange(50);
+    }
+}
 void MainWindow::setLightTower(){
     if(!m_towerPositionsList.at(m_current).hasTower())
     {
@@ -181,12 +249,24 @@ void MainWindow::paintEvent(QPaintEvent *)//有关画图的所有函数都集合
     foreach (const TowerPosition &towerPos, m_towerPositionsList)
 		towerPos.draw(&cachePainter);
 
-    foreach (const light_tower *tower, m_light_towersList)
+    foreach (/*const*/ light_tower *tower, m_light_towersList){
         tower->draw(&cachePainter);
-
-    foreach (const Tower *tower, m_towersList)
+        if(light_tower_for_show == tower){
+            cachePainter.save();
+            cachePainter.setPen(Qt::red);
+            cachePainter.drawEllipse(tower->getpos(),30,30);
+            cachePainter.restore();
+        }
+    }
+    foreach (/*const*/ Tower *tower, m_towersList){
 		tower->draw(&cachePainter);
-
+        if(tower_for_show == tower){
+            cachePainter.save();
+            cachePainter.setPen(Qt::red);
+            cachePainter.drawEllipse(tower->getpos(),30,30);
+            cachePainter.restore();
+        }
+    }
     foreach (const WayPoint *wayPoint, m_wayPointsList)
 		wayPoint->draw(&cachePainter);
 
@@ -218,13 +298,15 @@ void MainWindow::paintEvent(QPaintEvent *)//有关画图的所有函数都集合
         }
     }
 
-    drawWave(&cachePainter);
+
 	drawHP(&cachePainter);
     drawPlayerGold(&cachePainter);
     drawcurrentHP(&cachePainter);
 
 	QPainter painter(this);
     painter.drawPixmap(0, 0, cachePix);//这一步画出地图
+    drawWave(&painter);
+    drawinfo(&painter);
     }
     if(stage==2){
         QPixmap cachePix(":/image/map.jpg");
@@ -271,24 +353,26 @@ void MainWindow::paintEvent(QPaintEvent *)//有关画图的所有函数都集合
             }
         }
 
-        drawWave(&cachePainter);
         drawHP(&cachePainter);
         drawPlayerGold(&cachePainter);
         drawcurrentHP(&cachePainter);
 
+
         QPainter painter(this);
         painter.drawPixmap(0, 0, cachePix);//这一步画出地图
+        drawinfo(&painter);
+        drawWave(&painter);
     }
 }
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
-    if(event->key()==Qt::Key_E)
+    if(event->key()==Qt::Key_I)
     {
         foreach (Enemy* enemy, enemyList()) {
             enemy->setmaxcurrentHP();//将所有敌人的血量回满
         }
     }
-    if(event->key()==Qt::Key_Q){
+    if(event->key()==Qt::Key_O){
         if(enemyList().indexOf(targetenemy)!=-1){
             removedEnemy(targetenemy);//秒杀targetenemy这个敌人
         }
@@ -303,10 +387,34 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 }
 void MainWindow::mousePressEvent(QMouseEvent *event)//有关鼠标点击的所有操作,如果有两张地图所点击的内容不一样呢？如何做？
 {
-
+    QPoint pressPos = event->pos();
+    temp = pressPos;
+    foreach (Tower *tower, m_towersList) {
+        if(collisionWithCircle(tower->getpos(), 30, temp ,30)){
+            temptower = tower;
+            templighttower = NULL;
+            break;
+        }
+    }
+    foreach (light_tower *tower, m_light_towersList) {
+        if(collisionWithCircle(tower->getpos(), 30,temp, 30)){
+            templighttower = tower;
+            temptower = NULL;
+            break;
+        }
+    }
+    if(event->button()==Qt::LeftButton)
+    {
+        foreach(Enemy* enemy, enemyList())
+        {
+            if(collisionWithCircle(enemy->pos(),10, pressPos, 10))
+            {
+                targetenemy = enemy;
+                break;
+            }
+        }
+    }
     if(event->button()==Qt::LeftButton){
-        QPoint pressPos = event->pos();
-        temp = pressPos;
         for(int i=0;i!=m_towerPositionsList.size();i++){
             if(m_towerPositionsList.at(i).containPoint(pressPos)){
                 if(!m_towerPositionsList.at(i).hasTower()){
@@ -326,59 +434,49 @@ void MainWindow::mousePressEvent(QMouseEvent *event)//有关鼠标点击的所�
 void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
 {
     QPoint pos=event->pos();
-    foreach (Tower *tower, m_towersList) {//双击清除地狱塔
-        if(collisionWithCircle(tower->getpos(), 20, pos, 20)){
-            auto it=m_towerPositionsList.begin();
-            while(it!=m_towerPositionsList.end()){
-                if(collisionWithCircle(it->centerPos(), 20, pos, 20)){
-                    it->setHasTower(0);break;
-                }
-                ++it;
-            }
 
-            foreach(Enemy* enemy, m_enemyList){
-                if(enemy->m_attackedTowersList.indexOf(tower)!=-1){
-                    enemy->m_attackedTowersList.removeOne(tower);
-                }
-            }
+//    foreach (Tower *tower, m_towersList) {//双击清除地狱塔
+//        if(collisionWithCircle(tower->getpos(), 20, pos, 20)){
+//            auto it=m_towerPositionsList.begin();
+//            while(it!=m_towerPositionsList.end()){
+//                if(collisionWithCircle(it->centerPos(), 20, pos, 20)){
+//                    it->setHasTower(0);break;
+//                }
+//                ++it;
+//            }
 
-            tower->getRemoved();
-             m_towersList.removeOne(tower);
-            break;
-        }
-    }
-    foreach (light_tower *tower, m_light_towersList) {//双击清除光塔
-        if(collisionWithCircle(tower->getpos(),20, pos, 20)){
-            auto it=m_towerPositionsList.begin();
-            while(it!=m_towerPositionsList.end()){
-                if(collisionWithCircle(it->centerPos(), 20, pos, 20)){
-                    it->setHasTower(0);break;
-                }
-                ++it;
-            }
-            foreach(Enemy* enemy, m_enemyList){
-                if(enemy->m_attackedlight_towersList.indexOf(tower)!=-1){
-                    enemy->m_attackedlight_towersList.removeOne(tower);
-                }
-            }
-            tower->getRemoved();
-            m_light_towersList.removeOne(tower);
-            break;
+//            foreach(Enemy* enemy, m_enemyList){
+//                if(enemy->m_attackedTowersList.indexOf(tower)!=-1){
+//                    enemy->m_attackedTowersList.removeOne(tower);
+//                }
+//            }
 
-        }
+//            //tower->getRemoved();不能写这个！！写了就闪退了
+//            m_towersList.removeOne(tower);
+//            break;
+//        }
+//    }
+//    foreach (light_tower *tower, m_light_towersList) {//双击清除光塔
+//        if(collisionWithCircle(tower->getpos(),20, pos, 20)){
+//            auto it=m_towerPositionsList.begin();
+//            while(it!=m_towerPositionsList.end()){
+//                if(collisionWithCircle(it->centerPos(), 20, pos, 20)){
+//                    it->setHasTower(0);break;
+//                }
+//                ++it;
+//            }
+//            foreach(Enemy* enemy, m_enemyList){
+//                if(enemy->m_attackedlight_towersList.indexOf(tower)!=-1){
+//                    enemy->m_attackedlight_towersList.removeOne(tower);
+//                }
+//            }
+//            //tower->getRemoved();不能写这个！！写了就闪退了
+//            m_light_towersList.removeOne(tower);
+//            break;
+//        }
+//    }
 
-    }
-    if(event->button()==Qt::LeftButton)
-    {
-        foreach(Enemy* enemy, enemyList())
-        {
-            if(collisionWithCircle(enemy->pos(),10, pos, 10))
-            {
-                targetenemy = enemy;
-                break;
-            }
-        }
-    }
+
 }
 bool MainWindow::canBuyTower() const//如果金钱大于塔的价格，则返回真
 {
@@ -388,20 +486,24 @@ bool MainWindow::canBuyTower() const//如果金钱大于塔的价格，则返回
 }
 void MainWindow::drawWave(QPainter *painter)
 {
-    painter->setPen(QPen(Qt::black));
-	painter->drawText(QRect(400, 5, 100, 25), QString("WAVE : %1").arg(m_waves + 1));
-    painter->drawText(QRect(100, 5, 200, 50), QString("Stage: %1").arg(stage));
+    painter->setPen(QPen(Qt::white));
+    painter->drawText(QRect(980,150,200,25), QString("当前关卡 : %1").arg(stage));
+    painter->drawText(QRect(980,175,200,25), QString("当前波数 : %1").arg(m_waves + 1));
 }
 void MainWindow::drawcurrentHP(QPainter *painter)
 {
-    if(/*this->m_HPpercent_forenemy!=-1*/enemyList().indexOf(targetenemy)!=-1/*有效避免空指针情况*/ && targetenemy!=NULL){
+    /*
+    if(enemyList().indexOf(targetenemy)!=-1 && targetenemy!=NULL){
         painter->setPen(QPen(Qt::black));
-        painter->drawText(QRect(200,25,400,55),QString("PERCENT : %1%    %2   /  %3").arg(targetenemy->getcurrentHp() * 100 / targetenemy->getmaxHP()).arg(targetenemy->getcurrentHp()).arg(targetenemy->getmaxHP()));
+        double temporary = targetenemy->getcurrentHp() * 10000 / targetenemy->getmaxHP() / 100.0;
+        QString str = QString::number(temporary, 'd', 2);
+        painter->drawText(QRect(200,25,400,55),QString("PERCENT : %1%    %2   /  %3").arg(str).arg(targetenemy->getcurrentHp()).arg(targetenemy->getmaxHP()));
     }
     else{
         painter->drawText(QRect(200,25,400,55),QString("PERCENT : %1%    %2   /  %3").arg(0).arg(0).arg(0));//不能删除一个NULL
     }
-
+    */
+    //这部分内容放到drawinfo()完成
 }
 void MainWindow::drawHP(QPainter *painter)
 {
@@ -421,6 +523,34 @@ void MainWindow::doGameOver()
 		// 此处应该切换场景到结束场景
 		// 暂时以打印替代,见paintEvent处理
 	}
+}
+void MainWindow::drawinfo(QPainter *painter){
+    if(enemyList().indexOf(targetenemy)!=-1){
+        painter->setPen(QPen(Qt::white));
+        //painter->drawText(QRect(960,200,1160,400),QString("这是一个示范%1").arg(targetenemy->getcurrentHp()));
+        double temporary = targetenemy->getcurrentHp() * 10000 / targetenemy->getmaxHP() / 100.0;
+        QString str = QString::number(temporary, 'd', 2);
+        if(targetenemy->kind == 1)
+        painter->drawText(QRect(980,200,160,600),
+                          QString("当前血量与百分比：\n%1%   \n%2  /   %3\n描述：\n这是一个非常普通的敌人\n千万不要大意了！")
+                          .arg(str).arg(targetenemy->getcurrentHp()).arg(targetenemy->getmaxHP())
+                          );
+    }
+    //if(tower_for_show){
+    if(m_towersList.indexOf(tower_for_show)!=-1){
+        painter->setPen(QPen(Qt::white));
+        painter->drawText(QRect(980,500,160,600),
+                          QString("伤害：%1\n攻击范围：%2\n")
+                          .arg(tower_for_show->m_damage).arg(tower_for_show->m_attackRange));
+    }
+    else
+    //if(light_tower_for_show){
+    if(m_light_towersList.indexOf(light_tower_for_show)!=-1){
+        painter->setPen(QPen(Qt::white));
+        painter->drawText(QRect(980,500,160,600),
+                          QString("伤害：%1\n攻击范围：%2\n")
+                          .arg(light_tower_for_show->m_damage).arg(light_tower_for_show->getrange()));
+    }
 }
 void MainWindow::awardGold(int gold)
 {
@@ -593,7 +723,6 @@ void MainWindow::removedEnemy(Enemy *enemy)
 	}
     }
 }
-
 void MainWindow::removedTower(Tower *tower)
 {
     Q_ASSERT(tower);
@@ -681,7 +810,12 @@ bool MainWindow::loadWave()//这个函数很关键，与plist有关
         enemy->setm_walkingspeed(WalkingSpeed);
         QString temp = dict.value("address").toString();
         enemy->setQPixmap(temp);
-
+        if(temp == ":/image/enemy.png")
+            enemy->kind = 1;
+        /*
+        if(temp ==
+            enemy->kind = 2;
+        */
 		m_enemyList.push_back(enemy);
 
 		QTimer::singleShot(spawnTime, enemy, SLOT(doActivate()));

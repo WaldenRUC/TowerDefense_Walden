@@ -11,7 +11,7 @@
 #include "bullet_wandering.h"
 
 const QSize Tower::ms_fixedSize(66, 66);//原来42，42
-static int RANGE = 120;
+static int RANGE = 180;
 static int DAMAGE = 5;//原：5
 static int FIRERATE = 5;//原：5
 
@@ -20,6 +20,8 @@ Tower::Tower(QPoint pos, MainWindow *game, const QPixmap &sprite/* = QPixmap(":/
     , level(1)
     , m_attackRange(RANGE)//原先70
     , m_damage(DAMAGE)//原先10
+    , m_basic_damage(DAMAGE)
+    , m_basic_range(RANGE)
     , m_fireRate(FIRERATE)//原先1000
 	, m_rotationSprite(0.0)
 	, m_chooseEnemy(NULL)
@@ -73,9 +75,9 @@ void Tower::checkEnemyInRange()
     else if(!m_game->enemyList().empty())//补充：empty
     {
 		// 遍历敌人,看是否有敌人在攻击范围内
-        m_attackRange=RANGE;
+        m_attackRange=m_basic_range;
         m_rotationSprite=0;
-        m_damage=DAMAGE;
+        m_damage=m_basic_damage;
         QList<Enemy *> enemyList = m_game->enemyList();
         foreach (Enemy *enemy, enemyList)
         {
@@ -115,25 +117,26 @@ void Tower::draw(QPainter *painter) const
 void Tower::attackEnemy()
 {
     m_fireRateTimer->start(m_fireRate);//延迟m_fireRate时间后开始射击
-    //m_fireRateTimer->start(500);
-    //m_fireRate=1;
     m_lasttime->start(300);//地狱塔：0.5s之后开启秒杀模式
-    m_llasttime->start(1000);////
+    m_llasttime->start(1000);
 }
 
 void Tower::chooseEnemyForAttack(Enemy *enemy)
 {
     if(!m_game->enemyList().empty() && enemy!=NULL && m_game->enemyList().indexOf(enemy)!=-1){
     m_chooseEnemy = enemy;
+    /*
     QList<Enemy *> enemyList = m_game->enemyList();
-    /*foreach (Enemy *aenemy, enemyList)
+
+    foreach (Enemy *aenemy, enemyList)
     {
         if(collisionWithCircle(enemy->pos(), 40, aenemy->pos(), 40))
         {
             if(aenemy)
-            aenemy->getDamage(1000);
+            aenemy->getDamage(m_damage);
         }
-    }*/
+    }
+    */
     //这里的溅射伤害仅仅会在选定目标时造成,这里注释掉，因为最好要在子弹打中的时候再写这一段
 	attackEnemy();
     m_chooseEnemy->getAttacked_by_tower(this);}
@@ -143,62 +146,67 @@ void Tower::shootWeapon()
 {
     if(this->m_chooseEnemy && !m_game->enemyList().empty() && m_game->enemyList().indexOf(m_chooseEnemy)!=-1){//补充empty
 	Bullet *bullet = new Bullet(m_pos, m_chooseEnemy->pos(), m_damage, m_chooseEnemy, m_game);
-    bullet_wandering *wander1 = new bullet_wandering(m_pos, m_damage, m_game);
-    bullet_wandering *wander2 = new bullet_wandering(m_pos, m_damage, m_game);
-    bullet_wandering *wander3 = new bullet_wandering(m_pos, m_damage, m_game);
-    bullet_wandering *wander4 = new bullet_wandering(m_pos, m_damage, m_game);
-    qreal temp = qAtan2(m_chooseEnemy->pos().y()-m_pos.y(),m_chooseEnemy->pos().x()-m_pos.x());
-    wander1->angle = temp - 3.14/8.0;
-    wander2->angle = temp + 3.14/8.0;
-    wander3->angle = temp + 3.14/6.0;
-    wander4->angle = temp - 3.14/6.0;
-    wander1->move();
-    wander2->move();
-    wander3->move();
-    wander4->move();
     bullet->move();
     m_game->addBullet(bullet);
+
+    qreal temp = qAtan2(m_chooseEnemy->pos().y()-m_pos.y(),m_chooseEnemy->pos().x()-m_pos.x());
+
+    if(level>=2){
+    bullet_wandering *wander1 = new bullet_wandering(m_pos, m_damage, m_game);
+    wander1->angle = temp - 3.14/9.0;
+    wander1->move();
     m_game->addwandering_bullet(wander1);
+
+    bullet_wandering *wander2 = new bullet_wandering(m_pos, m_damage, m_game);
+    wander2->angle = temp + 3.14/9.0;
+    wander2->move();
     m_game->addwandering_bullet(wander2);
+    }
+    if(level>=3){
+    bullet_wandering *wander3 = new bullet_wandering(m_pos, m_damage, m_game);
+    wander3->angle = temp + 3.14/12.0;
+    wander3->move();
     m_game->addwandering_bullet(wander3);
+
+    bullet_wandering *wander4 = new bullet_wandering(m_pos, m_damage, m_game);
+    wander4->angle = temp - 3.14/12.0;
+    wander4->move();
     m_game->addwandering_bullet(wander4);
     }
+    }
 }
-//地狱塔专用
 void Tower::shootOTK()
 {
-    if(m_chooseEnemy){
-    m_damage += 2;//秒杀！
+    //if(m_chooseEnemy){
+    if(m_game->m_enemyList.indexOf(m_chooseEnemy)!=-1){
+    m_damage += 2;
     m_attackRange+=5;//原10
     }
     else 　{
-        m_damage=DAMAGE;
-        m_attackRange=RANGE;
+        m_damage=m_basic_damage;
+        m_attackRange=m_basic_range;
     }
 }
 void Tower::shootOTKultimate()
 {
-    if(m_chooseEnemy)m_damage += 3;
+    //if(m_chooseEnemy)
+    if(m_game->m_enemyList.indexOf(m_chooseEnemy)!=-1)
+        m_damage += 3;
     else{
-        m_damage=DAMAGE;m_attackRange=RANGE;
+        m_damage=m_basic_damage;
+        m_attackRange=m_basic_range;
     }
-   // m_llasttime->stop();
 }
-//地狱塔专用
 void Tower::targetKilled()
 {
     m_chooseEnemy->gotLostSight_by_tower(this);
     if (m_chooseEnemy)
-		m_chooseEnemy = NULL;
-    //地狱塔
+        m_chooseEnemy = NULL;
     m_lasttime->stop();
     m_llasttime->stop();
-    m_damage=DAMAGE;
-    m_attackRange=RANGE;
-    //m_fireRate=1;
-    //地狱塔
+    m_damage=m_basic_damage;
+    m_attackRange=m_basic_range;
     m_fireRateTimer->stop();
-
     m_rotationSprite = 0.0;//将炮塔旋转回原先的位置
 }
 
@@ -206,14 +214,11 @@ void Tower::lostSightOfEnemy()
 {
     m_chooseEnemy->gotLostSight_by_tower(this);
     if (m_chooseEnemy)
-		m_chooseEnemy = NULL;
-    //仅限地狱塔
+        m_chooseEnemy = NULL;
     m_lasttime->stop();
     m_llasttime->stop();
-    m_damage=DAMAGE;
-    m_attackRange=RANGE;
-    //m_fireRate=1;
-    //仅限地狱塔
+    m_damage=m_basic_damage;
+    m_attackRange=m_basic_range;
     m_fireRateTimer->stop();
     m_rotationSprite = 0.0;//将炮塔旋转回原先的位置
 }
@@ -226,5 +231,4 @@ void Tower::getRemoved()
         enemy->gotLostSight_by_tower(this);//如果enemy的attacked列表里没有这个塔呢？
     }
     m_game->removedTower(this);
-
 }

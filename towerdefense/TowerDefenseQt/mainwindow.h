@@ -47,10 +47,24 @@ public:
     QList<Enemy *> enemyList() const;//敌人列表
     QList<Tower *>			m_towersList;//塔的列表
 
+    //
+    Tower* temptower = NULL;
+    light_tower *templighttower = NULL;
+    //
+
+    //
+    QString str_tower;
+    QString str_lighttower;
+    Tower* tower_for_show = NULL;
+    light_tower *light_tower_for_show = NULL;
+    //
+
     bool ispause;
     QPoint temp;
     void setMenu();
     int stage;
+
+        QList<Enemy *>              m_enemyList;
 protected:
 	void paintEvent(QPaintEvent *);
 	void mousePressEvent(QMouseEvent *);
@@ -63,8 +77,11 @@ private slots:
 
     void setTower();
     void setLightTower();
+    void upgradelevel();
     void upgradeRange();
     void upgradeDamage();
+    void removethis();
+    void showinfo();
 
     void on_doubleSpinBox_valueChanged(double arg1);
     void on_checkBox_clicked(bool checked);
@@ -79,6 +96,8 @@ private:
 	void drawWave(QPainter *painter);
     void drawcurrentHP(QPainter *painter);
 	void drawHP(QPainter *painter);
+    void drawinfo(QPainter *painter);
+
 	void drawPlayerGold(QPainter *painter);
 	void doGameOver();
 	void preLoadWavesInfo();
@@ -97,7 +116,7 @@ private:
     QList<TowerPosition>        m_towerPositionsList;//防御塔位置的坐标列表，要用auto it遍历
     QList<light_tower *>        m_light_towersList;
     QList<WayPoint *>           m_wayPointsList;
-    QList<Enemy *>              m_enemyList;
+
 
     QList<Bullet *>             m_bulletList;
     QList<bullet_wandering *>   m_bullet_wanderingList;

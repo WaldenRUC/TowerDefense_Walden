@@ -28,7 +28,6 @@ public:
     QWidget *widget;
     QCheckBox *checkBox;
     QPushButton *pushButton;
-    QPushButton *pushButton_2;
     QCheckBox *checkBox_2;
 
     void setupUi(QMainWindow *MainWindow)
@@ -52,9 +51,6 @@ public:
         pushButton->setObjectName(QStringLiteral("pushButton"));
         pushButton->setGeometry(QRect(1020, 50, 113, 32));
         pushButton->setStyleSheet(QStringLiteral("color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(0, 0, 0, 255), stop:1 rgba(255, 255, 255, 255));"));
-        pushButton_2 = new QPushButton(centralWidget);
-        pushButton_2->setObjectName(QStringLiteral("pushButton_2"));
-        pushButton_2->setGeometry(QRect(1010, 490, 113, 32));
         checkBox_2 = new QCheckBox(centralWidget);
         checkBox_2->setObjectName(QStringLiteral("checkBox_2"));
         checkBox_2->setGeometry(QRect(1030, 100, 87, 20));
@@ -70,7 +66,6 @@ public:
         MainWindow->setWindowTitle(QApplication::translate("MainWindow", "MainWindow", nullptr));
         checkBox->setText(QApplication::translate("MainWindow", "\345\274\200\345\220\257\346\227\240\346\225\214", nullptr));
         pushButton->setText(QApplication::translate("MainWindow", "\347\234\237\350\250\200\346\234\257\357\274\232\347\233\276", nullptr));
-        pushButton_2->setText(QApplication::translate("MainWindow", "PushButton", nullptr));
         checkBox_2->setText(QApplication::translate("MainWindow", "\346\232\202\345\201\234", nullptr));
     } // retranslateUi
 

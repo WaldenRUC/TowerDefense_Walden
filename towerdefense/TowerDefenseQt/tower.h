@@ -28,18 +28,23 @@ public:
 	void damageEnemy();
 	void lostSightOfEnemy();
     void getRemoved();
-
-    const QPoint getpos(){
+    void originrange(){
+        m_basic_range = 0;
+    }
+    int				m_damage;		// 代表攻击敌人时造成的伤害
+    const QPoint getpos() {
         return this->m_pos;
     }
     void setrange(int range){
-        this->m_attackRange+=range;
+        this->m_basic_range+=range;
     }
 
-
+    Enemy *			m_chooseEnemy;
     void setdamage(int damage){
-        this->m_damage += damage;
+        this->m_basic_damage += damage;
     }
+    int				m_attackRange;	// 代表塔可以攻击到敌人的距离
+
 private slots:
 	void shootWeapon();
     //地狱塔专用槽
@@ -49,19 +54,18 @@ private slots:
 
 private:
 	bool			m_attacking;
-	int				m_attackRange;	// 代表塔可以攻击到敌人的距离
-	int				m_damage;		// 代表攻击敌人时造成的伤害
 	int				m_fireRate;		// 代表再次攻击敌人的时间间隔
 	qreal			m_rotationSprite;
+    int             m_basic_range;
+    int             m_basic_damage;
 
-	Enemy *			m_chooseEnemy;
 	MainWindow *	m_game;
 	QTimer *		m_fireRateTimer;
 
     QTimer *        m_lasttime;
     QTimer *        m_llasttime;
 
-	const QPoint	m_pos;
+    QPoint          m_pos;
 	const QPixmap	m_sprite;
 
 	static const QSize ms_fixedSize;
